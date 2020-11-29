@@ -19,9 +19,13 @@ function [options,results,zFA] = find_threshPC(data_to_fit,options)
 
 n_fa = data_to_fit(1,2);
 n_safe = data_to_fit(1,3);
-zFA = sqrt(2)*erfinv(2*(n_fa/n_safe)-1);
+
+% MML edit
+% zFA = sqrt(2)*erfinv(2*(n_fa/n_safe)-1);
+zFA = norminv(n_fa/n_safe);
+
 zThresh = options.dprimeThresh+zFA;
-options.threshPC = (erf(zThresh/sqrt(2))+1)/2;
+options.threshPC = (erf(zThresh/sqrt(2))+1)/2;  % MML: not sure what this is
 
 %Fit the data
 results = psignifit(data_to_fit,options);
