@@ -9,6 +9,8 @@ function plot_pfs_behav(directoryname,figuredirectory)
 %
 %
 %Written by MLC 11/28/2016.
+
+% Patched by M Macedo-Lima November, 2020
 %---------------------------------------
 warning('off','psignifit:ThresholdPCchanged');
 set(0,'DefaultTextInterpreter','none');
@@ -18,9 +20,12 @@ set(0,'DefaultTextInterpreter','none');
 %Get a list of .mat files in the directory
 [file_list, file_index] = listFiles(directoryname,'*.mat');
 
+subplot_rows = 6;
+subplot_cols = 6; %subplot index too small
 
 %For each file...
 for which_file = 1:length(file_index)
+    
     
     %Load file
     filename = file_list(file_index(which_file)).name;
@@ -60,7 +65,7 @@ for which_file = 1:length(file_index)
         
         %Plot the percent correct values and fit, and save handles
         figure(f1);
-        s = subplot(3,4,which_session);
+        s = subplot(subplot_rows,subplot_cols,which_session);
         plotPsych(results,plotOptions);
         handles_f1 = [handles_f1;s]; %#ok<*AGROW>
         
@@ -70,7 +75,7 @@ for which_file = 1:length(file_index)
         %Now transform to dprime space
         %------------------------------------------------------
         figure(f2)
-        s2 = subplot(3,4,which_session);
+        s2 = subplot(subplot_rows,subplot_cols,which_session);
         [x,fitted_yes,fitted_dprime,threshold,slope] = ...
             plotPsych_dprime(results,...
             output(which_session).dprimemat,options,plotOptions,zFA);
@@ -111,7 +116,7 @@ for which_file = 1:length(file_index)
         fname = [file_list(file_index(which_file)).name(1:end-4),figType];
         suptitle(fname(4:end-4))
         set(f,'PaperPositionMode','auto');
-        print(f,'-painters','-depsc', [figuredirectory,fname])
+        print(f,'-painters','-depsc', fullfile(figuredirectory,fname))
     end
     
     close all
@@ -119,9 +124,44 @@ for which_file = 1:length(file_index)
     
     %Save file
     fname = file_list(file_index(which_file)).name(1:end-4);
-    savename = [directoryname,fname];
+    savename = fullfile(directoryname,fname);
     save(savename,'output','-append');
     disp(['Fit and threshold saved successfully to ', savename])
+    
+    
+    %  MML edit: generate a CSV with thresholds and session ID too
+    load(savename);
+    block_id = {};
+    thresholds = {};
+    for session_idx=1:numel(Session)
+        try
+            try
+                cur_block_id = datestr(datetime(Session(session_idx).Info.StartTime), 'yymmdd-HHMMSS');
+            catch ME
+                if strcmp(ME.identifier, 'MATLAB:datetime:UnrecognizedDateStringSuggestLocale')
+                    % Some sessions have weird format because they didn't save properly
+                    cur_block_id = [datestr(datenum(Session(session_idx).Info.StartDate), 'yymmdd') '-' Session(session_idx).Info.StartTime];
+
+                else
+                    throw(ME)
+                end
+            end
+
+           cur_threshold = output(session_idx).fitdata.threshold;
+        catch ME
+            if strcmp(ME.identifier, 'MATLAB:structRefFromNonStruct')
+                fprintf(ME.message);
+                continue
+            else
+                throw(ME)
+            end
+        end
+        block_id{end+1} = cur_block_id;
+        thresholds{end+1} = cur_threshold;
+    end
+    output_table = cell2table(horzcat(block_id', thresholds'));
+    output_table.Properties.VariableNames = {'Block_id' 'Threshold'};
+    writetable(output_table, fullfile([savename '_psychThreshold.csv']));
     
 end
 
