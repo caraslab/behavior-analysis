@@ -47,8 +47,25 @@ for k = 1:numel(sortedfiles)
     temp = load(data_file);
 
     %Save data to data structure
-    Session(k).Data = temp.Data;
-    Session(k).Info = temp.Info;
+    try
+        Session(k).Data = temp.Data;
+        Session(k).Info = temp.Info;
+    catch ME
+        if strcmp(ME.identifier, 'MATLAB:nonExistentField')
+            % This might happen when ePsych crashes and we need to use the
+            % recovered file, which is formatted differently and
+            % incompletely. You need to manually search for this file in
+            % the MatLab ePsych crash files and rename it appropriately.
+            % This chunk should take care of the rest
+            Session(k).Data = temp.data;
+            Session(k).Info = temp.info;
+            Session(k).Info.Name = temp.info.Subject.Name;
+            Session(k).Info.Date = temp.info.StartDate;
+            Session(k).Info.Bits = struct('hit',1, 'miss', 2, 'cr', 3, 'fa', 4);
+        else
+            throw(ME)
+        end
+    end
 
 end
 
