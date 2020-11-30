@@ -11,12 +11,11 @@
 % November, 2020
 
 %% Set your paths
-% Ephysdir: Where your processed ephys recordings are. No need to declare this
-%   variable if you are not interested in or don't have ephys
+% Savedir: Output directory. If you have ephys data, this is where the processed data are.
 
 % Behaviordir: Where the ePsych behavior files are; -mat files will be
 %   combined into a single file. Before running this, group similar sessions
-%   into folders named: 
+%   into folders named, for example: 
 %   shock_training, psych_testing, pre_passive, post_passive
 
 % sel: whether you want to run all or a subset of the folders. If 1, you
