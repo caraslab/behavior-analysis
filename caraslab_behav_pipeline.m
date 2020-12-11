@@ -22,10 +22,9 @@
 %   will be prompted to select folders. Multiple folders can be selected
 %   using Ctrl or Shift
 % 
-subj_id = 'SUBJ-ID-158';
-Savedir = ['/mnt/132bfc10-ead6-48da-986e-007a5a3d1d87/Matt/Cannula SCH behavior project/' subj_id];  
-Behaviordir = ['/mnt/132bfc10-ead6-48da-986e-007a5a3d1d87/matlab_data_files/' subj_id];
 
+Savedir = '/mnt/132bfc10-ead6-48da-986e-007a5a3d1d87/Matt/Cannula SCH behavior project/SUBJ-ID-158';  
+Behaviordir = '/mnt/132bfc10-ead6-48da-986e-007a5a3d1d87/matlab_data_files/SUBJ-ID-158';
 
 sel = 1;  % Select subfolders; 0 will run all subfolders
 
