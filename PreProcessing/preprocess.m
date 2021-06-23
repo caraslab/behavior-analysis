@@ -1,4 +1,4 @@
-function preprocess(directoryname)
+function preprocess(directoryname, max_trial)
 %preprocess(directoryname)
 %
 %This function goes through each datafile in a directory, and calculates
@@ -15,6 +15,9 @@ function preprocess(directoryname)
 %
 %Written by ML Caras Jan 29, 2018
 
+if nargin < 2
+    max_trial = 0;
+end
 
 %List the files in the folder (each file = animal)
 [files,fileIndex] = listFiles(directoryname,'*.mat');
@@ -39,18 +42,18 @@ for i = 1:numel(files)
            continue
        end
       %Create trialmat and dprimemat in preparation for psychometric fits  
-      output = create_mats(Session, output, j, files.folder);
+      output = create_mats(Session, output, j, files.folder, max_trial);
 
     end
     
     %Save the file
-    save(data_file,'output','-append')    
+    save(data_file,'output','-append')
     
 end
 
 
 %Create trialmat and dprimemat in preparation for psychometric fitting
-function output = create_mats(Session, output, j, output_dir)
+function output = create_mats(Session, output, j, output_dir, max_trial)
 
     %-------------------------------
     %Prepare data
@@ -74,7 +77,7 @@ function output = create_mats(Session, output, j, output_dir)
     resp = resp(rmind);
     ttype = ttype(rmind);
 
-    % Count number of trials
+    % Count number of trials _ orig
     [n_trials, unique_stim] = hist(stim,unique(stim));
     n_trials = [n_trials' unique_stim]; 
     good_stim = n_trials(n_trials(:,1) >= 5, 2);
@@ -83,6 +86,11 @@ function output = create_mats(Session, output, j, output_dir)
         output(j).dprimemat = [];
         return
     end
+    
+  
+    
+    
+    
     % Remove stimuli that have less than 5 trials
     rtrial = find(~ismember(stim,good_stim,'rows'));
     stim(rtrial, :) = [];
@@ -95,10 +103,78 @@ function output = create_mats(Session, output, j, output_dir)
 
 
 
+
+    %-------------------------------------
+    %Calculate hit rates
+    %-------------------------------------
+    go_ind = find(ttype == 0);
+    go_stim = stim(go_ind);
+    go_resp = resp(go_ind);
+    
+    max_go_trial = 0;
+    
+    u_go_stim =unique(go_stim);
+
+    %For each go stimulus...
+    for m = 1:numel(u_go_stim)
+
+        %Pull out data for just that stimulus
+        m_ind = find(go_stim == u_go_stim(m));
+        cur_go_ind = go_ind(m_ind);
+        
+        % Remove trials past a specific trial
+        if max_trial > 0
+            m_ind = m_ind(1:max_trial);
+            cur_go_ind = cur_go_ind(1:max_trial);
+            
+            if max(cur_go_ind) > max_go_trial
+                max_go_trial = max(cur_go_ind);
+            end
+        end
+        
+        go_resp_m = go_resp(m_ind); %#ok<*FNDSB>
+
+        %Calculate the hit rate
+        n_hit = sum(bitget(go_resp_m,hitbit));
+        
+
+        
+        n_go = numel(go_resp_m);
+        
+        hit_rate = n_hit/n_go;
+        
+        %Adjust floor
+        if hit_rate <0.05
+            hit_rate = 0.05;
+        end
+        
+        %adjust ceiling
+        if hit_rate >0.95
+            hit_rate = 0.95;
+        end
+
+        % MML edit: log-linear correction for fa_rate (Hautus 1995) in case of extreme values
+%         hit_rate = (n_hit +0.5)/(n_go + 1);
+
+        %Adjust number of hits to match adjusted hit rate (so we can fit
+        %data with psignifit later)
+        n_hit = hit_rate*n_go;
+
+        %Append to trial mat
+        trialmat = [trialmat;u_go_stim(m),n_hit,n_go]; %#ok<AGROW>
+
+    end
+
+
     %-------------------------------------
     %Calculate fa rate
     %-------------------------------------
     nogo_ind = find(ttype == 1);
+    
+    if max_go_trial > 0
+        nogo_ind = nogo_ind(nogo_ind < max_go_trial);
+    end
+    
     stim_val = stim(nogo_ind(1));
     nogo_resp = resp(nogo_ind);
     n_fa = sum(bitget(nogo_resp,fabit));
@@ -132,52 +208,6 @@ function output = create_mats(Session, output, j, output_dir)
     %Append to trialmat
     trialmat = [trialmat;stim_val,n_fa,n_nogo];
 
-
-
-
-    %-------------------------------------
-    %Calculate hit rates
-    %-------------------------------------
-    go_ind = find(ttype == 0);
-    go_stim = stim(go_ind);
-    go_resp = resp(go_ind);
-
-    u_go_stim =unique(go_stim);
-
-    %For each go stimulus...
-    for m = 1:numel(u_go_stim)
-
-        %Pull out data for just that stimulus
-        m_ind = find(go_stim == u_go_stim(m));
-        go_resp_m = go_resp(m_ind); %#ok<*FNDSB>
-
-        %Calculate the hit rate
-        n_hit = sum(bitget(go_resp_m,hitbit));
-        n_go = numel(go_resp_m);
-        
-        hit_rate = n_hit/n_go;
-        
-        %Adjust floor
-        if hit_rate <0.05
-            hit_rate = 0.05;
-        end
-        
-        %adjust ceiling
-        if hit_rate >0.95
-            hit_rate = 0.95;
-        end
-
-        % MML edit: log-linear correction for fa_rate (Hautus 1995) in case of extreme values
-%         hit_rate = (n_hit +0.5)/(n_go + 1);
-
-        %Adjust number of hits to match adjusted hit rate (so we can fit
-        %data with psignifit later)
-        n_hit = hit_rate*n_go;
-
-        %Append to trial mat
-        trialmat = [trialmat;u_go_stim(m),n_hit,n_go]; %#ok<AGROW>
-
-    end
 
     %Convert stimulus values to log and sort data so safe stimulus is on top
     trialmat(:,1) = make_stim_log(trialmat);

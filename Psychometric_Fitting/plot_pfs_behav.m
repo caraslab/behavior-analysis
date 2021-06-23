@@ -76,9 +76,18 @@ for which_file = 1:length(file_index)
         %------------------------------------------------------
         figure(f2)
         s2 = subplot(subplot_rows,subplot_cols,which_session);
+        try
         [x,fitted_yes,fitted_dprime,threshold,slope] = ...
             plotPsych_dprime(results,...
             output(which_session).dprimemat,options,plotOptions,zFA);
+        catch ME
+            if strcmp(ME.message, 'The threshold percent correct is not reached by the sigmoid!')
+                continue
+            else
+                rethrow(ME);
+            end
+            
+        end
         hold on;
         
         %Save plot handles
@@ -101,8 +110,16 @@ for which_file = 1:length(file_index)
     
     
     %Save figures
-    linkaxes(handles_f1);
-    linkaxes(handles_f2);
+    try
+        linkaxes(handles_f1);
+        linkaxes(handles_f2);
+    catch ME
+        if strcmp(ME.message, 'There must be at least one valid axes.')
+            continue
+        else
+            rethrow(ME);
+        end
+    end
     
     for j = 1:2
         if j == 1
