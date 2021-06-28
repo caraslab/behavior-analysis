@@ -12,6 +12,7 @@ function caraslab_behav_pipeline(Savedir, Behaviordir, sel, recording_format)
 % Author: M Macedo-Lima
 % November, 2020
 
+
 % Patched by M Macedo-Lima in April, 2021:
 % Added some improvements to accommodate for ePsych crash file formats and allow file-matching with Intan recordings
 
@@ -19,9 +20,10 @@ function caraslab_behav_pipeline(Savedir, Behaviordir, sel, recording_format)
 % Savedir: Where your processed ephys recordings are. No need to declare this
 %   variable if you are not interested in or don't have ephys
 
+
 % Behaviordir: Where the ePsych behavior files are; -mat files will be
 %   combined into a single file. Before running this, group similar sessions
-%   into folders named: 
+%   into folders named, for example: 
 %   shock_training, psych_testing, pre_passive, post_passive
 
 % sel: whether you want to run all or a subset of the folders. If 1, you
@@ -36,6 +38,7 @@ function caraslab_behav_pipeline(Savedir, Behaviordir, sel, recording_format)
 if nargin == 0
     Savedir = '/mnt/132bfc10-ead6-48da-986e-007a5a3d1d87/Matt/OFC cannula SCH perceptual learning/SUBJ-ID-191';  
     Behaviordir = '/mnt/132bfc10-ead6-48da-986e-007a5a3d1d87/matlab_data_files';
+
 
 
     sel = 1;  % Select subfolders; 0 will run all subfolders
