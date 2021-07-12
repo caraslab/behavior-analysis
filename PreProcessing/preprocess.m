@@ -53,7 +53,7 @@ end
 
 
 %Create trialmat and dprimemat in preparation for psychometric fitting
-function output = create_mats(Session, output, j, output_dir, max_trial)
+function ret_output = create_mats(Session, ret_output, j, output_dir, max_trial)
 
     %-------------------------------
     %Prepare data
@@ -82,8 +82,8 @@ function output = create_mats(Session, output, j, output_dir, max_trial)
     n_trials = [n_trials' unique_stim]; 
     good_stim = n_trials(n_trials(:,1) >= 5, 2);
     if length(good_stim) < 2
-        output(j).trialmat = [];
-        output(j).dprimemat = [];
+        ret_output(j).trialmat = [];
+        ret_output(j).dprimemat = [];
         return
     end
     
@@ -223,8 +223,8 @@ function output = create_mats(Session, output, j, output_dir, max_trial)
     dprime = z_hit - z_fa;
     dprimemat = [trialmat(2:end,1),dprime];
 
-    output(j).trialmat = trialmat;
-    output(j).dprimemat = dprimemat;
+    ret_output(j).trialmat = trialmat;
+    ret_output(j).dprimemat = dprimemat;
     
     %% Output trialmat and dprimemat into a CSV
     if j == 1
